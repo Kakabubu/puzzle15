@@ -2,16 +2,17 @@ const N = 4;
 const totalTiles = 15;
 let puzzle = [];
 let codesEntered = 0;
-let codes = new Set(); // Stores entered codes
-let unlocked = false; // Becomes true after all codes are entered
+let codes = new Set();
+let unlocked = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     generateSolvablePuzzle();
     renderPuzzle();
     
-    document.getElementById("codeInput").addEventListener("keydown", (e) => {
+    const inputBox = document.getElementById("codeInput");
+    inputBox.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-            enterCode(e.target.value);
+            enterCode(e.target.value.trim());
             e.target.value = "";
         }
     });
@@ -61,13 +62,20 @@ function renderPuzzle() {
 }
 
 function enterCode(code) {
+    if (code === "codeAll") {
+        revealAllTiles();
+        return;
+    }
+
     if (!codes.has(code) && codes.size < totalTiles) {
         codes.add(code);
         codesEntered++;
         revealNextTile();
     }
+
     if (codesEntered === totalTiles) {
         unlocked = true;
+        document.getElementById("codeInput").style.display = "none";
         alert("All pieces unlocked! Now solve the puzzle.");
     }
 }
@@ -82,6 +90,14 @@ function revealNextTile() {
             }
         }
     }
+}
+
+function revealAllTiles() {
+    puzzle.flat().forEach(tile => tile.revealed = true);
+    unlocked = true;
+    document.getElementById("codeInput").style.display = "none";
+    renderPuzzle();
+    alert("Cheat activated: All tiles revealed!");
 }
 
 function moveTile(event) {
