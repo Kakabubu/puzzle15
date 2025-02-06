@@ -1,83 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>15 Puzzle with Hidden Tiles</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(4, 80px); gap: 5px; margin: 20px auto; width: 350px; }
-        .tile { width: 80px; height: 80px; font-size: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid black; background: lightgray; cursor: pointer; }
-        .hidden { background: blue; color: blue; cursor: default; }
-        .empty { background: white; border: 2px dashed gray; cursor: default; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>15 Puzzle Game</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
 </head>
 <body>
-    <h1>15 Puzzle - Unlock Tiles with Codes</h1>
-    <div class="grid" id="puzzle"></div>
-    <input type="text" id="codeInput" placeholder="Enter code">
-    <button onclick="unlockTile()">Unlock</button>
-    
-    <script>
-        const solvableState = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
-        let tiles = shuffleSolvable(solvableState.slice());
-        let hiddenTiles = Array(15).fill(true).concat(false); // Last tile (empty) is not hidden
-        const puzzle = document.getElementById("puzzle");
-        const codes = tiles.map(n => `code${n}`);
-
-        function shuffleSolvable(arr) {
-            do { arr.sort(() => Math.random() - 0.5); } 
-            while (!isSolvable(arr));
-            return arr;
-        }
-
-        function isSolvable(arr) {
-            let inversions = 0;
-            for (let i = 0; i < 15; i++) {
-                for (let j = i + 1; j < 15; j++) {
-                    if (arr[i] && arr[j] && arr[i] > arr[j]) inversions++;
-                }
-            }
-            return inversions % 2 === 0;
-        }
-
-        function drawPuzzle() {
-            puzzle.innerHTML = "";
-            tiles.forEach((num, i) => {
-                const tile = document.createElement("div");
-                tile.className = "tile" + (num === 0 ? " empty" : "") + (hiddenTiles[i] ? " hidden" : "");
-                tile.textContent = hiddenTiles[i] ? "🔵" : (num || "");
-                tile.onclick = () => moveTile(i);
-                puzzle.appendChild(tile);
-            });
-        }
-
-        function unlockTile() {
-            const input = document.getElementById("codeInput").value;
-            const index = codes.indexOf(input);
-            if (index !== -1 && hiddenTiles[index]) {
-                hiddenTiles[index] = false;
-                drawPuzzle();
-            }
-            document.getElementById("codeInput").value = "";
-        }
-
-        function moveTile(index) {
-            if (hiddenTiles.includes(true)) return; // Can't move if tiles are still locked
-            const emptyIndex = tiles.indexOf(0);
-            const validMoves = [emptyIndex - 1, emptyIndex + 1, emptyIndex - 4, emptyIndex + 4];
-            if (validMoves.includes(index) && Math.abs(emptyIndex - index) !== 3) {
-                [tiles[emptyIndex], tiles[index]] = [tiles[index], tiles[emptyIndex]];
-                drawPuzzle();
-                checkWin();
-            }
-        }
-
-        function checkWin() {
-            if (tiles.every((num, i) => num === solvableState[i])) {
-                alert("Congratulations! You solved the puzzle!");
-            }
-        }
-
-        drawPuzzle();
-    </script>
+    <h1>15 Puzzle Game</h1>
+    <input type="text" id="codeInput" placeholder="Enter code..." autocomplete="off">
+    <div id="puzzle-container"></div>
 </body>
 </html>
