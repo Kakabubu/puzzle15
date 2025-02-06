@@ -44,9 +44,9 @@ h1 {
     gap: 5px;
     width: calc(100vw - 30px);
     max-width: 90vmin;
-    height: auto;
     aspect-ratio: 1;
     margin-top: 20px;
+    background-color: #ddd;
 }
 
 /* Puzzle tiles */
