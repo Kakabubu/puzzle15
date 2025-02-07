@@ -1,5 +1,9 @@
 const N = 4;
 const totalTiles = 15;
+const imagePath = {
+    hidden: "images/hidden/", // Folder for hidden images
+    revealed: "images/revealed/" // Folder for revealed images
+};
 let puzzle = [];
 let codesEntered = 0;
 let codes = new Set();
@@ -8,7 +12,7 @@ let unlocked = false;
 document.addEventListener("DOMContentLoaded", () => {
     generateSolvablePuzzle();
     renderPuzzle();
-    
+
     const inputBox = document.getElementById("codeInput");
     inputBox.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -26,12 +30,14 @@ function generateSolvablePuzzle() {
 
     puzzle = Array(N).fill().map(() => Array(N).fill(null));
     let index = 0;
-    
+
     for (let row = 0; row < N; row++) {
         for (let col = 0; col < N; col++) {
             if (index < totalTiles) {
                 puzzle[row][col] = { number: numbers[index], revealed: false };
                 index++;
+            } else if (row === N - 1 && col === N - 1) {
+                puzzle[row][col] = { number: 16, revealed: true, isBackground: true };
             } else {
                 puzzle[row][col] = { number: 0, revealed: true }; // Empty space
             }
@@ -46,13 +52,23 @@ function renderPuzzle() {
         row.forEach((tile, cIdx) => {
             const div = document.createElement("div");
             div.className = "tile";
-            if (tile.number === 0) {
+
+            if (tile.isBackground) {
+                const img = document.createElement("img");
+                img.src = `${imagePath.revealed}16.png`;
+                img.alt = "Background";
+                div.appendChild(img);
+            } else if (tile.number === 0) {
                 div.classList.add("empty");
-            } else if (!tile.revealed) {
-                div.innerHTML = "❓"; // Hidden state
             } else {
-                div.innerHTML = tile.number;
+                const img = document.createElement("img");
+                img.src = tile.revealed
+                    ? `${imagePath.revealed}${tile.number}.png`
+                    : `${imagePath.hidden}${tile.number}.png`;
+                img.alt = `Tile ${tile.number}`;
+                div.appendChild(img);
             }
+
             div.dataset.row = rIdx;
             div.dataset.col = cIdx;
             div.addEventListener("click", moveTile);
@@ -103,13 +119,13 @@ function revealAllTiles() {
 function moveTile(event) {
     if (!unlocked) return;
 
-    let row = parseInt(event.target.dataset.row);
-    let col = parseInt(event.target.dataset.col);
+    let row = parseInt(event.target.parentElement.dataset.row);
+    let col = parseInt(event.target.parentElement.dataset.col);
     let emptyPos = findEmptyTile();
 
     if (isAdjacent(row, col, emptyPos.row, emptyPos.col)) {
-        [puzzle[row][col], puzzle[emptyPos.row][emptyPos.col]] = 
-        [puzzle[emptyPos.row][emptyPos.col], puzzle[row][col]];
+        [puzzle[row][col], puzzle[emptyPos.row][emptyPos.col]] =
+            [puzzle[emptyPos.row][emptyPos.col], puzzle[row][col]];
         renderPuzzle();
         checkWin();
     }
@@ -131,10 +147,10 @@ function isAdjacent(r1, c1, r2, c2) {
 
 function checkWin() {
     let correct = [...Array(totalTiles).keys()].map(x => x + 1);
-    correct.push(0);
+    correct.push(16);
 
     let flatPuzzle = puzzle.flat().map(t => t.number);
-    
+
     if (JSON.stringify(flatPuzzle) === JSON.stringify(correct)) {
         alert("🎉 You solved it!");
     }
