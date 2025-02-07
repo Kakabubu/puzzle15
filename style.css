@@ -1,3 +1,8 @@
+:root {
+    --image-margin: 5px; /* Define a CSS variable for the image margin */
+    --font-size: calc(1.5vw + 1.5vh); /* Define a CSS variable for scalable font size */
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -13,26 +18,42 @@ body {
     height: 100vh;
     background-color: #f4f4f4;
     padding: 0 15px;
+    overflow: hidden; /* Prevent scrolling */
 }
 
 h1 {
-    font-size: 24px;
+    font-size: var(--font-size); /* Use scalable font size */
     margin-bottom: 10px;
 }
 
 #codeInput {
-    font-size: 20px;
+    font-size: var(--font-size); /* Use scalable font size */
     padding: 12px;
-    width: 100%;
-    max-width: 300px;
+    width: 75%; /* Set width to 75% of the puzzle container */
+    max-width: calc(100vw - 30px);
     border: 2px solid #333;
-    border-radius: 5px;
+    border-radius: var(--image-margin);
     outline: none;
+    margin-bottom: 10px; /* Add margin to separate from the button */
+}
+
+#resetButton {
+    padding: 15px 30px;
+    font-size: var(--font-size); /* Use scalable font size */
+    cursor: pointer;
+    width: 75%; /* Set width to 75% of the puzzle container */
+    max-width: calc(100vw - 30px);;
+    margin-top: 10px;
+    border: 2px solid #333;
+    border-radius: var(--image-margin);
 }
 
 /* Prevent zooming when input is focused */
 @media screen and (max-width: 600px) {
     #codeInput {
+        font-size: 18px;
+    }
+    #resetButton {
         font-size: 18px;
     }
 }
@@ -42,11 +63,13 @@ h1 {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 5px;
-    width: calc(100vw - 30px);
-    max-width: 90vmin;
-    aspect-ratio: 1;
-    margin-top: 20px;
+    width: calc(100vw - 30px); /* Adjust to fit within the viewport width */
+    max-width: calc(100vh - 150px); /* Adjust to fit within the viewport height */
+    aspect-ratio: 1; /* Ensure it remains square */
+    margin-top: var(--font-size);
+    margin-bottom: var(--font-size);
     background-color: #ddd;
+    flex-shrink: 0; /* Ensure it doesn't shrink */
 }
 
 /* Puzzle tiles */
@@ -55,8 +78,8 @@ h1 {
     align-items: center;
     justify-content: center;
     width: 100%;
-    aspect-ratio: 1;
-    font-size: 24px;
+    aspect-ratio: 1; /* Ensure tiles are always square */
+    font-size: 16px; /* Adjust font size to fit smaller tiles */
     background-color: white;
     border: 2px solid #333;
     border-radius: 5px;
@@ -64,7 +87,20 @@ h1 {
     transition: 0.2s;
 }
 
+.tile img {
+    width: calc(100% - var(--image-margin) * 2); /* Resize images to be smaller */
+    height: calc(100% - var(--image-margin) * 2); /* Resize images to be smaller */
+    object-fit: cover; /* Ensure images fit within the tiles */
+    margin: var(--image-margin); /* Center the images within the tiles */
+}
+
 .tile.hidden {
     background-color: #ccc;
     color: transparent;
+}
+
+.large-button {
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
 }
