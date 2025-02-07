@@ -71,12 +71,12 @@ function generateSolvablePuzzle() {
     for (let row = 0; row < puzzleSetting.size; row++) {
         for (let col = 0; col < puzzleSetting.size; col++) {
             if (index < puzzleSetting.totalTiles) {
-                puzzleGameState.puzzle[row][col] = { number: numbers[index], revealed: false };
+                puzzleGameState.puzzle[row][col] = { number: numbers[index], initialOrder: index + 1, revealed: false };
                 index++;
             } else if (row === puzzleSetting.size - 1 && col === puzzleSetting.size - 1) {
-                puzzleGameState.puzzle[row][col] = { number: 16, revealed: true, isBackground: true };
+                puzzleGameState.puzzle[row][col] = { number: 16, initialOrder: index + 1, revealed: true, isBackground: true };
             } else {
-                puzzleGameState.puzzle[row][col] = { number: 0, revealed: true }; // Empty space
+                puzzleGameState.puzzle[row][col] = { number: 0, initialOrder: index + 1, revealed: true }; // Empty space
             }
         }
     }
@@ -104,7 +104,7 @@ function renderPuzzle() {
                 if (tile.revealed) {
                     img.src = `${imagePath.revealed}${tile.number}.png`;
                 } else if (!firstUnrevealedTileFound) {
-                    img.src = `${imagePath.hidden}${tile.number}.png`;
+                    img.src = `${imagePath.hidden}${tile.initialOrder}.png`;
                     firstUnrevealedTileFound = true;
                 } else {
                     img.src = imagePath.questionMark;
@@ -136,7 +136,7 @@ function enterCode(code) {
     if (tile.revealed) return;
     if (tile.number == 1) revealTile(tile);
     else {
-        const previousTile = puzzleGameState.puzzle.flat().find(t => t.number == tile.number - 1)
+        const previousTile = puzzleGameState.puzzle.flat().find(t => t.initialOrder == tile.number - 1)
         if (!previousTile) {
             alert("Previous tile not found.");
             return;
@@ -162,7 +162,7 @@ function revealNextTile() {
 }
 
 function revealTile({ number: tileNumber }) {
-    const tile = puzzleGameState.puzzle.flat().find(tile => tile.number == tileNumber);
+    const tile = puzzleGameState.puzzle.flat().find(tile => tile.initialOrder == tileNumber);
     if (!tile) return;
     quizGameState.codesMap[`tile${tile.number}`]
         .revealed = tile.revealed = true;
