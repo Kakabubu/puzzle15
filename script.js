@@ -1,9 +1,12 @@
-const N = 4;
-const totalTiles = 15;
+const puzzleSetting = {
+    size: 4,
+    totalTiles: 15,
+}
 
 const imagePath = {
     hidden: "images/hidden/", // Folder for hidden images
-    revealed: "images/revealed/" // Folder for revealed images
+    revealed: "images/revealed/", // Folder for revealed images
+    questionMark: "images/question.png" // Image for hidden tiles
 };
 
 const storageStateName = 'puzzleState';
@@ -14,8 +17,25 @@ const puzzleGameState = {
 };
 
 const quizGameState = {
-    codes: new Set(),
-    codesEntered: 0
+    codesMap: {
+        tile1: { code: "value1", number: 1 },
+        tile2: { code: "value2", number: 2 },
+        tile3: { code: "value3", number: 3 },
+        tile4: { code: "value4", number: 4 },
+        tile5: { code: "value5", number: 5 },
+        tile6: { code: "value6", number: 6 },
+        tile7: { code: "value7", number: 7 },
+        tile8: { code: "value8", number: 8 },
+        tile9: { code: "value9", number: 9 },
+        tile10: { code: "value10", number: 10 },
+        tile11: { code: "value11", number: 11 },
+        tile12: { code: "value12", number: 12 },
+        tile13: { code: "value13", number: 13 },
+        tile14: { code: "value14", number: 14 },
+        tile15: { code: "value15", number: 15 },
+        tile16: { code: "value16", number: 16 },
+        cheatCode: "codeAll"
+    },
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -23,11 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPuzzle();
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
-    if (code) {
-        enterCode(code);
-        window.history.replaceState({}, document.title, window.location.pathname); // Remove code from URL
-    }
-    
     const inputBox = document.getElementById("codeInput");
     inputBox.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -38,23 +53,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const resetButton = document.getElementById("resetButton");
     resetButton.addEventListener("click", resetGame);
+    if (code) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        enterCode(code);
+    }
 });
 
 function generateSolvablePuzzle() {
-    let numbers = [...Array(totalTiles).keys()].map(x => x + 1);
+    let numbers = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
     do {
         numbers = shuffle(numbers);
     } while (!isSolvable(numbers));
 
-    puzzleGameState.puzzle = Array(N).fill().map(() => Array(N).fill(null));
+    puzzleGameState.puzzle = Array(puzzleSetting.size).fill().map(() => Array(puzzleSetting.size).fill(null));
     let index = 0;
 
-    for (let row = 0; row < N; row++) {
-        for (let col = 0; col < N; col++) {
-            if (index < totalTiles) {
+    for (let row = 0; row < puzzleSetting.size; row++) {
+        for (let col = 0; col < puzzleSetting.size; col++) {
+            if (index < puzzleSetting.totalTiles) {
                 puzzleGameState.puzzle[row][col] = { number: numbers[index], revealed: false };
                 index++;
-            } else if (row === N - 1 && col === N - 1) {
+            } else if (row === puzzleSetting.size - 1 && col === puzzleSetting.size - 1) {
                 puzzleGameState.puzzle[row][col] = { number: 16, revealed: true, isBackground: true };
             } else {
                 puzzleGameState.puzzle[row][col] = { number: 0, revealed: true }; // Empty space
@@ -67,6 +86,7 @@ function generateSolvablePuzzle() {
 function renderPuzzle() {
     const container = document.getElementById("puzzle-container");
     container.innerHTML = "";
+    let firstUnrevealedTileFound = false;
     puzzleGameState.puzzle.forEach((row, rIdx) => {
         row.forEach((tile, cIdx) => {
             const div = document.createElement("div");
@@ -81,9 +101,14 @@ function renderPuzzle() {
                 div.classList.add("empty");
             } else {
                 const img = document.createElement("img");
-                img.src = tile.revealed
-                    ? `${imagePath.revealed}${tile.number}.png`
-                    : `${imagePath.hidden}${tile.number}.png`;
+                if (tile.revealed) {
+                    img.src = `${imagePath.revealed}${tile.number}.png`;
+                } else if (!firstUnrevealedTileFound) {
+                    img.src = `${imagePath.hidden}${tile.number}.png`;
+                    firstUnrevealedTileFound = true;
+                } else {
+                    img.src = imagePath.questionMark;
+                }
                 img.alt = `Tile ${tile.number}`;
                 div.appendChild(img);
             }
@@ -98,18 +123,30 @@ function renderPuzzle() {
 }
 
 function enterCode(code) {
-    if (code === "codeAll") {
-        revealAllTiles();
+    if (code === quizGameState.codesMap.cheatCode) return revealAllTiles();
+
+    const tilesState = Object.values(quizGameState.codesMap);
+    const tile = tilesState.find(t => t.code == code);
+
+    if (!tile || !tile.number) {
+        alert("Invalid code. Try again.");
         return;
     }
 
-    if (!quizGameState.codes.has(code) && quizGameState.codes.size < totalTiles) {
-        quizGameState.codes.add(code);
-        quizGameState.codesEntered++;
-        revealNextTile();
+    if (tile.revealed) return;
+    if (tile.number == 1) revealTile(tile);
+    else {
+        const previousTile = puzzleGameState.puzzle.flat().find(t => t.number == tile.number - 1)
+        if (!previousTile) {
+            alert("Previous tile not found.");
+            return;
+        } else if (!previousTile.revealed) {
+            alert("You need to unlock the previous tile first.");
+            return;
+        } else revealTile(tile);
     }
 
-    if (quizGameState.codesEntered === totalTiles) {
+    if (tile.number === puzzleSetting.totalTiles) {
         puzzleGameState.unlocked = true;
         document.getElementById("codeInput").style.display = "none";
         alert("All pieces unlocked! Now solve the puzzle.");
@@ -118,19 +155,18 @@ function enterCode(code) {
 }
 
 function revealNextTile() {
-    for (let row of puzzleGameState.puzzle) {
-        for (let tile of row) {
-            if (!tile.revealed && tile.number !== 0) {
-                tile.revealed = true;
-                renderPuzzle();
-                return;
-            }
-        }
-    }
+    const tile = puzzleGameState.puzzle.flat()
+        .find(tile => !tile.revealed && tile.number !== 0) || { number: 0 };
+
+    revealTile(tile);
 }
 
-function revealTile(tileNumber) {
-
+function revealTile({ number: tileNumber }) {
+    const tile = puzzleGameState.puzzle.flat().find(tile => tile.number == tileNumber);
+    if (!tile) return;
+    quizGameState.codesMap[`tile${tile.number}`]
+        .revealed = tile.revealed = true;
+    renderPuzzle();
 }
 
 function revealAllTiles() {
@@ -159,13 +195,7 @@ function moveTile(event) {
 }
 
 function findEmptyTile() {
-    for (let row = 0; row < N; row++) {
-        for (let col = 0; col < N; col++) {
-            if (puzzleGameState.puzzle[row][col].number === 0) {
-                return { row, col };
-            }
-        }
-    }
+    return puzzleGameState.puzzle.flat().find(tile => tile.number === 0);
 }
 
 function isAdjacent(r1, c1, r2, c2) {
@@ -173,7 +203,7 @@ function isAdjacent(r1, c1, r2, c2) {
 }
 
 function checkWin() {
-    let correct = [...Array(totalTiles).keys()].map(x => x + 1);
+    let correct = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
     correct.push(16);
 
     let flatPuzzle = puzzleGameState.puzzle.flat().map(t => t.number);
@@ -204,12 +234,12 @@ function getInvCount(arr) {
 
 function findXPosition(flatPuzzle) {
     let index = flatPuzzle.indexOf(0);
-    return N - Math.floor(index / N);
+    return puzzleSetting.size - Math.floor(index / puzzleSetting.size);
 }
 
 function isSolvable(numbers) {
     let invCount = getInvCount(numbers);
-    if (N % 2 === 1) return invCount % 2 === 0;
+    if (puzzleSetting.size % 2 === 1) return invCount % 2 === 0;
     let pos = findXPosition(numbers);
     return (pos % 2 === 1) === (invCount % 2 === 0);
 }
@@ -228,8 +258,6 @@ function loadGameState() {
     const savedState = JSON.parse(savedStateJSON);
     puzzleGameState.puzzle = savedState.puzzleGameState.puzzle || [];
     puzzleGameState.unlocked = savedState.puzzleGameState.unlocked || false;
-    quizGameState.codes = new Set(Array.from(savedState.quizGameState.codes || []));
-    quizGameState.codesEntered = savedState.quizGameState.codesEntered || 0;
 }
 
 function resetGame() {
