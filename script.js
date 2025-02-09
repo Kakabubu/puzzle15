@@ -123,10 +123,12 @@ function renderPuzzle() {
 }
 
 function enterCode(code) {
+    const normalize = (str) => str.toLowerCase().replace(/\s+/g, '');
+    code = normalize(code); 
     if (code === quizGameState.codesMap.cheatCode) return revealAllTiles();
 
     const tilesState = Object.values(quizGameState.codesMap);
-    const tile = tilesState.find(t => t.code == code);
+    const tile = tilesState.find(t => normalize(t.code) == code);
 
     if (!tile || !tile.number) {
         alert("Invalid code. Try again.");
