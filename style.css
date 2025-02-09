@@ -106,6 +106,8 @@ p {
     border-radius: 5px;
     user-select: none;
     transition: 0.2s;
+    position: relative; /* Ensure tiles can be positioned over the background tile */
+    z-index: 1; /* Ensure tiles are above the background tile */
 }
 
 .tile img {
@@ -118,6 +120,13 @@ p {
 .tile.hidden {
     background-color: #ccc;
     color: transparent;
+}
+
+.tile.background {
+    opacity: 0.5; /* Set transparency to 50% */
+    z-index: 0; /* Ensure the background tile is below other tiles */
+   /** background-color: #f0f0f0; /* Example background color */
+    /** border: 2px solid #ccc; /* Example border */
 }
 
 .large-button {
