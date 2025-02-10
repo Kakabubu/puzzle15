@@ -280,7 +280,7 @@ const puzzleGame = {
     },
     cheatsEnabled: () => typeof DEBUG_MODE !== 'undefined' && DEBUG_MODE,
     started: () =>
-        puzzleGame.state && puzzleGame.state.unlocked || puzzleGame.state.puzzle.some(tile => tile && tile.revealed)
+        puzzleGame.state && (puzzleGame.state.unlocked || puzzleGame.state.puzzle.some(tile => tile && tile.revealed))
 };
 
 const page = {
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             = startButton.value
             = startButtonText;
 
-        startButton.addEventListener('click', puzzleGame.started() ? page.open.game : puzzleGame.reset);
+        startButton.addEventListener('click', puzzleGame.started() ? puzzleGame.reset : page.open.game);
         return;
     }
 
