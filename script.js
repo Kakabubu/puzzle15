@@ -21,6 +21,7 @@ const gameMessages = {
     allTilesRevealed: "Всі пазли розблоковані! Тепер розв'язуйте пазл.",
     cheatAllTilesRevealed: 'ЧітКод Активовано: всі пазли розблоковані!',
     cheatPuzzleSolved: "ЧітКод Активовано: пазл розв'язано!",
+    confirmReset: "Почати гру наново, чи продовжити попередню? (Cancel щоб продовжити попередню)"
 }
 
 const puzzleGame = {
@@ -32,22 +33,22 @@ const puzzleGame = {
         return {
             size, emptyTileNumber, lastTileNumber, totalTiles,
             codesMap: {
-                tile1: { code: '1', number: 1 },//contidion478
-                tile2: { code: '2', number: 2 },//sock729//CHANGE
-                tile3: { code: '3', number: 3 },//tv557
-                tile4: { code: '4', number: 4 },//bed951
-                tile5: { code: '5', number: 5 },//owl741
-                tile6: { code: '6', number: 6 },//electr444
-                tile7: { code: '7', number: 7 },//ДанилоАнтонович709
-                tile8: { code: '8', number: 8 },//elevator123
-                tile9: { code: '9', number: 9 },//door512//CHANGE
-                tile10: { code: '10', number: 10 },//mazda777
-                tile11: { code: '11', number: 11 },//slide749
-                tile12: { code: '12', number: 12 },//mirror000//CHANGE
-                tile13: { code: '13', number: 13 },//bath105
-                tile14: { code: '14', number: 14 },//pipe771
-                tile15: { code: '15', number: 15 },//oven442
-                tile16: { code: '16', number: 16 },//freezer850
+                tile1: { code: 'contidion478', number: 1 },
+                tile2: { code: 'sock729', number: 2 },//CHANGE
+                tile3: { code: 'tv557', number: 3 },
+                tile4: { code: 'bed951', number: 4 },
+                tile5: { code: 'owl741', number: 5 },
+                tile6: { code: 'electr444', number: 6 },
+                tile7: { code: 'ДанилоАнтонович709', number: 7 },
+                tile8: { code: 'elevator123', number: 8 },
+                tile9: { code: 'door512', number: 9 },//CHANGE
+                tile10: { code: 'mazda777', number: 10 },
+                tile11: { code: 'slide749', number: 11 },
+                tile12: { code: 'mirror000', number: 12 },//CHANGE
+                tile13: { code: 'bath105', number: 13 },
+                tile14: { code: 'pipe771', number: 14 },
+                tile15: { code: 'oven442', number: 15 },
+                tile16: { code: 'freezer850', number: 16 },
                 cheatReveal: 'codeAll',
                 cheatSolve: 'codeSolve',
                 cheatSolveAlmoust: 'codeSolveAlmoust'
@@ -116,9 +117,12 @@ const puzzleGame = {
         puzzleGame.state.unlocked = savedState.unlocked || false;
     },
     reset() {
-        localStorage.removeItem(elementIds.storageState);
-        setCodeInputVisible(puzzleGame.cheatsEnabled());
-        puzzleGame.generate();
+        page.open.game();
+        if (confirm(gameMessages.confirmReset)) {
+            localStorage.removeItem(elementIds.storageState);
+            setCodeInputVisible(puzzleGame.cheatsEnabled());
+            puzzleGame.generate();
+        }
         puzzleGame.render();
     },
     render() {
@@ -171,7 +175,8 @@ const puzzleGame = {
         if (code === normalize(puzzleGame.setting().codesMap.cheatSolveAlmoust)) return cheat.solveAndLeaveLastMove()
 
         const tilesState = Object.values(puzzleGame.setting().codesMap);
-        const tile = tilesState.find(t => normalize(t.code || '') === code);
+        const tile = tilesState.find(t => normalize(t.code || '') === code)
+            || puzzleGame.cheatsEnabled() && puzzleGame.setting().codesMap[`tile${code}`];
 
         if (!tile || !tile.number) {
             alert(gameMessages.invalidCode);
@@ -204,7 +209,7 @@ const puzzleGame = {
         tile.revealed = true;
         puzzleGame.render();
     },
-    moveTile: (event) => {
+    moveTile(event) {
 
         const isAdjacent = (r1, c1, r2, c2) =>
             (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
@@ -273,8 +278,18 @@ const puzzleGame = {
             container.style.transform = '';
         }, 800);
     },
-    cheatsEnabled: () => true
+    cheatsEnabled: () => typeof DEBUG_MODE !== 'undefined' && DEBUG_MODE,
+    started: () =>
+        puzzleGame.state && puzzleGame.state.unlocked || puzzleGame.state.puzzle.some(tile => tile && tile.revealed)
 };
+
+const page = {
+    openPage(name) { window.location.assign(name); },
+    open: {
+        main() { page.openPage('index.html') },
+        game() { page.openPage('game.html') }
+    }
+}
 
 const cheat = {
     revealAllTiles() {
@@ -365,9 +380,13 @@ document.addEventListener('DOMContentLoaded', () => {
             = startButton.value
             = startButtonText;
 
-        startButton.addEventListener('click', openGamePage);
+        startButton.addEventListener('click', puzzleGame.started() ? page.open.game : puzzleGame.reset);
         return;
     }
+
+    const mainPageButton = document.getElementById('mainPageButton');
+    if (mainPageButton) mainPageButton.addEventListener('click', page.open.main);
+
 
     puzzleGame.loadState();
     puzzleGame.render();
@@ -375,18 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const code = urlParams.get('code');
     const inputBox = document.getElementById(elementIds.codeInput);
     inputBox.addEventListener('keydown', keydown);
-
-    const resetButton = document.getElementById(elementIds.resetButton);
-    resetButton.addEventListener('click', puzzleGame.reset);
     if (code) {
         window.history.replaceState({}, document.title, window.location.pathname);
         puzzleGame.enterCode(code);
     }
 });
-
-function openGamePage() {
-    window.location.assign('game.html');
-}
 
 function keydown(e) {
     if (e.key !== 'Enter') return;
