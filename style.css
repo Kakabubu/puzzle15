@@ -152,3 +152,18 @@ i a {
     left: 10px; /* Add some space from the left edge */
     width: calc(100% - 20px); /* Ensure it fits within the screen width */
 }
+
+#mainPageButton {
+    position: fixed; /* Ensure it stays at the top left corner */
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 2.5em; /* Match the header font size */
+    font-family: 'Roboto', sans-serif; /* Match the header font family */
+    cursor: pointer;
+    padding: 0; /* Remove padding */
+    width: auto; /* Adjust width to fit content */
+    height: auto; /* Adjust height to fit content */
+    color: #333; /* Match the common font color */
+}

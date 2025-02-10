@@ -55,7 +55,7 @@ const puzzleGame = {
             }
         }
     },
-    state: { puzzle: [], unlocked: false, revealedPiecesSource: [] },
+    state: { puzzle: [], unlocked: false, solved: false, revealedPiecesSource: [] },
     generate() {
         function shuffle(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
@@ -252,11 +252,13 @@ const puzzleGame = {
         if (isCorrect) {
             alert(gameMessages.win);
             localStorage.removeItem(elementIds.storageState);
+            puzzleGame.state.solved = true;
             puzzleGame.animateWin();
         }
     },
     animateWin() {
         const container = document.getElementById(elementIds.puzzleContainer);
+        const header = document.querySelector('h1');
 
         // Smoothly remove gap, margin, and adjust images
         container.style.transition = 'gap 0.8s ease-in-out, margin 0.8s ease-in-out, transform 0.8s ease-in-out';
@@ -273,14 +275,29 @@ const puzzleGame = {
             img.style.margin = '0px';
         });
 
+        // Hide the header
+        if (header) {
+            header.style.transition = 'opacity 0.8s ease-in-out';
+            header.style.opacity = '0';
+        }
+
+        // Remove the background class from the last tile
+        const lastTile = container.querySelector('.tile.background');
+        if (lastTile) {
+            lastTile.style.transition = 'opacity 0.8s ease-in-out';
+            lastTile.style.opacity = '1';
+            lastTile.classList.remove('background');
+        }
+
         // Restore normal scale after animation
         setTimeout(() => {
             container.style.transform = '';
         }, 800);
     },
     cheatsEnabled: () => typeof DEBUG_MODE !== 'undefined' && DEBUG_MODE,
-    started: () =>
-        puzzleGame.state && (puzzleGame.state.unlocked || puzzleGame.state.puzzle.some(tile => tile && tile.revealed))
+    started: () => puzzleGame.loadState()
+        || puzzleGame.state
+        && (puzzleGame.state.unlocked || puzzleGame.state.puzzle.some(tile => tile && tile.revealed))
 };
 
 const page = {
@@ -386,8 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mainPageButton = document.getElementById('mainPageButton');
     if (mainPageButton) mainPageButton.addEventListener('click', page.open.main);
-
-
     puzzleGame.loadState();
     puzzleGame.render();
     const urlParams = new URLSearchParams(window.location.search);
