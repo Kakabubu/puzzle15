@@ -40,6 +40,18 @@ p {
     margin-bottom: 20px; /* Add space between paragraphs */
 }
 
+button,
+input[type="button"] {
+    padding: 15px 30px;
+    font-size: var(--font-size); /* Use scalable font size */
+    cursor: pointer;
+    width: 75%; /* Set width to 75% of the puzzle container */
+    max-width: calc(100vw - 30px);
+    margin-top: 10px;
+    border: 2px solid #333;
+    border-radius: var(--image-margin);
+}
+
 #codeInput {
     font-size: var(--font-size); /* Use scalable font size */
     padding: 12px;
@@ -51,23 +63,13 @@ p {
     margin-bottom: 10px; /* Add margin to separate from the button */
 }
 
-#resetButton {
-    padding: 15px 30px;
-    font-size: var(--font-size); /* Use scalable font size */
-    cursor: pointer;
-    width: 75%; /* Set width to 75% of the puzzle container */
-    max-width: calc(100vw - 30px);;
-    margin-top: 10px;
-    border: 2px solid #333;
-    border-radius: var(--image-margin);
-}
-
 /* Prevent zooming when input is focused */
 @media screen and (max-width: 600px) {
     #codeInput {
         font-size: 18px;
     }
-    #resetButton {
+    button,
+    input[type="button"] {
         font-size: 18px;
     }
     h1 {
@@ -83,7 +85,7 @@ p {
 #puzzle-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
+    gap: 5px; /* Initial gap between tiles */
     width: calc(100vw - 30px); /* Adjust to fit within the viewport width */
     max-width: calc(100vh - 150px); /* Adjust to fit within the viewport height */
     aspect-ratio: 1; /* Ensure it remains square */
@@ -91,6 +93,7 @@ p {
     margin-bottom: var(--font-size);
     background-color: #ddd;
     flex-shrink: 0; /* Ensure it doesn't shrink */
+    transition: gap 1s; /* Smooth transition for gap */
 }
 
 /* Puzzle tiles */
@@ -102,8 +105,8 @@ p {
     aspect-ratio: 1; /* Ensure tiles are always square */
     font-size: 16px; /* Adjust font size to fit smaller tiles */
     background-color: white;
-    border: 2px solid #333;
-    border-radius: 5px;
+    /* border: 2px solid #333; */
+    /* border-radius: 5px; */
     user-select: none;
     transition: 0.2s;
     position: relative; /* Ensure tiles can be positioned over the background tile */
@@ -133,4 +136,19 @@ p {
     padding: 15px 30px;
     font-size: 18px;
     cursor: pointer;
+}
+
+i a {
+    position: relative;
+    top: -10px; /* Adjust the value to position the text in the higher corner */
+    font-size: 0.8em; /* Adjust the font size if needed */
+}
+
+.note {
+    font-size: 0.8em; /* Make the text small */
+    text-align: left; /* Align text to the left */
+    position: absolute; /* Position the note absolutely */
+    bottom: 10px; /* Position it at the bottom edge of the screen */
+    left: 10px; /* Add some space from the left edge */
+    width: calc(100% - 20px); /* Ensure it fits within the screen width */
 }

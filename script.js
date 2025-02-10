@@ -1,3 +1,5 @@
+const startButtonText = "Вперед до пошуків";
+
 const puzzleSetting = {
     size: 4,
     totalTiles: 15,
@@ -43,6 +45,7 @@ const quizGameState = {
         tile16: { code: '16', number: 16 },//freezer850
         cheatReveal: 'codeAll',
         cheatSolve: 'codeSolve',
+        cheatSolveAlmoust: 'codeSolveAlmoust'
     },
     messages: {
         win: '🎉 Вітаю, ти вже ближче до винагороди. Тепер тобі треба прочитати цей пазл.',
@@ -56,17 +59,23 @@ const quizGameState = {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('startButton');
+    if (startButton) {
+        document.getElementById('startButtonText')
+            .innerText
+            = startButton.value
+            = startButtonText;
+
+        startButton.addEventListener('click', startGame);
+        return;
+    }
+
     loadGameState();
     renderPuzzle();
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const inputBox = document.getElementById(elementIds.codeInput);
-    inputBox.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            enterCode(e.target.value.trim());
-            e.target.value = '';
-        }
-    });
+    inputBox.addEventListener('keydown', keydown);
 
     const resetButton = document.getElementById(elementIds.resetButton);
     resetButton.addEventListener('click', resetGame);
@@ -75,6 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
         enterCode(code);
     }
 });
+
+const startGame = () => {
+    window.location.assign('game.html');
+}
+
+const keydown = (e) => {
+    if (e.key !== 'Enter') return;
+    enterCode(e.target.value.trim());
+    e.target.value = '';
+};
+
 
 function generateSolvablePuzzle() {
     let numbers = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
@@ -133,6 +153,7 @@ function enterCode(code) {
     code = normalize(code);
     if (code === normalize(quizGameState.codesMap.cheatReveal)) return cheat.revealAllTiles();
     if (code === normalize(quizGameState.codesMap.cheatSolve)) return cheat.solveGame();
+    if (code === normalize(quizGameState.codesMap.cheatSolveAlmoust)) return cheat.solveAndLeaveLastMove()
 
     const tilesState = Object.values(quizGameState.codesMap);
     const tile = tilesState.find(t => normalize(t.code || '') === code);
@@ -177,34 +198,6 @@ function revealTile({ number: tileNumber }) {
     renderPuzzle();
 }
 
-const cheat = {
-    revealAllTiles() {
-        alert(quizGameState.messages.cheatAllTilesRevealed);
-        puzzleGameState.puzzle.flat().forEach(tile => tile.revealed = true);
-        puzzleGameState.unlocked = true;
-        document.getElementById(elementIds.codeInput).style.display = 'none';
-        renderPuzzle();
-        saveGameState();
-    },
-    solveGame() {
-        alert(quizGameState.messages.cheatPuzzleSolved);
-        const correct = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
-        correct.push(puzzleSetting.emptyTileNumber);
-        puzzleGameState.puzzle = Array(puzzleSetting.size).fill().map(() => Array(puzzleSetting.size).fill(null));
-        let index = 0;
-
-        for (let row = 0; row < puzzleSetting.size; row++) {
-            for (let col = 0; col < puzzleSetting.size; col++) {
-                puzzleGameState.puzzle[row][col] = { number: correct[index], initialOrder: index + 1, revealed: true };
-                index++;
-            }
-        }
-        renderPuzzle();
-        checkWin();
-        saveGameState();
-    }
-}
-
 function moveTile(event) {
     if (!puzzleGameState.unlocked) return;
 
@@ -241,15 +234,40 @@ function isAdjacent(r1, c1, r2, c2) {
 }
 
 function checkWin() {
-    let correct = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
-    correct.push(puzzleSetting.lastTileNumber);
+    const flatPuzzle = puzzleGameState.puzzle.flat().map(t => t.number);
+    const correct = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
+    correct.push(puzzleSetting.emptyTileNumber);
+    const isCorrect = JSON.stringify(flatPuzzle) === JSON.stringify(correct);
 
-    let flatPuzzle = puzzleGameState.puzzle.flat().map(t => t.number);
-
-    if (JSON.stringify(flatPuzzle) === JSON.stringify(correct)) {
+    if (isCorrect) {
         alert(quizGameState.messages.win);
         localStorage.removeItem(elementIds.storageState);
+        animateWin();
     }
+}
+
+function animateWin() {
+    const container = document.getElementById(elementIds.puzzleContainer);
+
+    // Smoothly remove gap, margin, and adjust images
+    container.style.transition = 'gap 0.8s ease-in-out, margin 0.8s ease-in-out, transform 0.8s ease-in-out';
+    container.style.gap = '0px';
+    container.style.margin = '0px';
+    container.style.transform = 'scale(1.05)';
+
+    // Select all tile images and remove their margins smoothly
+    const images = container.querySelectorAll('.tile img');
+    images.forEach(img => {
+        img.style.transition = 'width 0.8s ease-in-out, height 0.8s ease-in-out, margin 0.8s ease-in-out';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.margin = '0px';
+    });
+
+    // Restore normal scale after animation
+    setTimeout(() => {
+        container.style.transform = '';
+    }, 800);
 }
 
 function shuffle(arr) {
@@ -302,4 +320,37 @@ function resetGame() {
     localStorage.removeItem(elementIds.storageState);
     generateSolvablePuzzle();
     renderPuzzle();
+}
+
+const cheat = {
+    revealAllTiles() {
+        alert(quizGameState.messages.cheatAllTilesRevealed);
+        puzzleGameState.puzzle.flat().forEach(tile => tile.revealed = true);
+        puzzleGameState.unlocked = true;
+        document.getElementById(elementIds.codeInput).style.display = 'none';
+        renderPuzzle();
+        saveGameState();
+    },
+    solveGame(withLastMove = false) {
+        alert(quizGameState.messages.cheatPuzzleSolved);
+        const correct = [...Array(puzzleSetting.totalTiles).keys()].map(x => x + 1);
+        correct.push(puzzleSetting.emptyTileNumber);
+        if (withLastMove) {
+            const lastIndex = correct.length - 1;
+            [correct[lastIndex], correct[lastIndex - 1]] = [correct[lastIndex - 1], correct[lastIndex]];
+        }
+        puzzleGameState.puzzle = Array(puzzleSetting.size).fill().map(() => Array(puzzleSetting.size).fill(null));
+        let index = 0;
+
+        for (let row = 0; row < puzzleSetting.size; row++) {
+            for (let col = 0; col < puzzleSetting.size; col++) {
+                puzzleGameState.puzzle[row][col] = { number: correct[index], initialOrder: index + 1, revealed: true };
+                index++;
+            }
+        }
+        renderPuzzle();
+        checkWin();
+        saveGameState();
+    },
+    solveAndLeaveLastMove: () => cheat.solveGame(true)
 }
