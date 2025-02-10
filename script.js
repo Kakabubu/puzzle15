@@ -117,6 +117,7 @@ const puzzleGame = {
     },
     reset() {
         localStorage.removeItem(elementIds.storageState);
+        setCodeInputVisible(puzzleGame.cheatsEnabled());
         puzzleGame.generate();
         puzzleGame.render();
     },
@@ -127,7 +128,7 @@ const puzzleGame = {
 
         // Load split image pieces from localStorage
         const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
-
+        let showTestEdit = false;
         puzzleGame.state.puzzle.forEach((row, rowIndex) => {
             row.forEach((tile, cellIndex) => {
                 const isEmptyTile = tile.number === puzzleGame.setting().emptyTileNumber;
@@ -147,6 +148,9 @@ const puzzleGame = {
                     : firstUnrevealedTileFound ? imagePath.questionMark
                         : `${imagePath.hidden}${tile.initialOrder}.png`;
 
+                if (tile.initialOrder === 7)
+                    showTestEdit = !tile.revealed && !firstUnrevealedTileFound;
+                setCodeInputVisible(showTestEdit || puzzleGame.cheatsEnabled());
                 if (!tile.revealed) firstUnrevealedTileFound = true;
                 if (!tile.revealed || !isEmptyTile || isLastPuzzleTile) div.appendChild(img);
 
@@ -189,7 +193,7 @@ const puzzleGame = {
 
         if (puzzleGame.state.puzzle.flat().every(tile => tile.revealed)) {
             puzzleGame.state.unlocked = true;
-            document.getElementById(elementIds.codeInput).style.display = 'none';
+            setCodeInputVisible(false);
             alert(gameMessages.allTilesRevealed);
         }
         puzzleGame.saveState();
@@ -278,7 +282,7 @@ const cheat = {
         alert(gameMessages.cheatAllTilesRevealed);
         puzzleGame.state.puzzle.flat().forEach(tile => tile.revealed = true);
         puzzleGame.state.unlocked = true;
-        document.getElementById(elementIds.codeInput).style.display = 'none';
+        setCodeInputVisible(false);
         puzzleGame.render();
         puzzleGame.saveState();
     },
@@ -388,4 +392,8 @@ function keydown(e) {
     if (e.key !== 'Enter') return;
     puzzleGame.enterCode(e.target.value.trim());
     e.target.value = '';
+}
+
+function setCodeInputVisible(isVisible = true) {
+    document.getElementById(elementIds.codeInput).style.display = isVisible ? 'block' : 'none';
 }
