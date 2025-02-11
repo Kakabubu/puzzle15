@@ -129,7 +129,7 @@ const puzzleGame = {
         const container = document.getElementById(elementIds.puzzleContainer);
         container.innerHTML = '';
         let firstUnrevealedTileFound = false;
-
+        puzzleGame.loadState();
         // Load split image pieces from localStorage
         const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
         let showTestEdit = false;
@@ -166,7 +166,7 @@ const puzzleGame = {
         const headerText = document.getElementById('headerText');
         const noteMantis = document.getElementById('note2');
         const noteMantisLink = document.getElementById('noteLink2');
-        puzzleGame.loadState();
+        
         if (puzzleGame.state.unlocked) {
             headerText.innerText = "Збери мапу";
             noteMantis.style.display = 'none';
