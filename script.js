@@ -90,14 +90,14 @@ const puzzleGame = {
 
         puzzleGame.state.puzzle = Array(puzzleGame.setting().size).fill().map(() => Array(puzzleGame.setting().size).fill(null));
 
-        for (let row = 0, index = 0; row < puzzleGame.setting().size; row++) {
+        for (let row = 0, initialOrder = 1; row < puzzleGame.setting().size; row++) {
             for (let col = 0; col < puzzleGame.setting().size; col++) {
-                isLastTile = index >= puzzleGame.setting().totalTiles;
+                isLastTile = initialOrder > puzzleGame.setting().totalTiles;
                 let tile = {
-                    number: isLastTile ? puzzleGame.setting().emptyTileNumber : numbers[index],
-                    initialOrder: ++index,
-                    revealed: false,
+                    number: isLastTile ? puzzleGame.setting().emptyTileNumber : numbers[initialOrder],
+                    initialOrder, revealed: false, covered: initialOrder != 1, empty: isLastTile
                 };
+                initialOrder++;
                 puzzleGame.state.puzzle[row][col] = tile;
             }
         }
@@ -130,31 +130,30 @@ const puzzleGame = {
         container.innerHTML = '';
         let firstUnrevealedTileFound = false;
         puzzleGame.loadState();
-        // Load split image pieces from localStorage
-        const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
-        let showTestEdit = false;
+
+        // Load split image pieces from localStorage//const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
+        let showTextEdit = false;
         puzzleGame.state.puzzle.forEach((row, rowIndex) => {
             row.forEach((tile, cellIndex) => {
-                const isEmptyTile = tile.number === puzzleGame.setting().emptyTileNumber;
                 const isLastPuzzleTile = rowIndex === puzzleGame.state.puzzle.length - 1 && cellIndex === row.length - 1;
                 const div = document.createElement('div'), img = document.createElement('img');
 
                 div.className = 'tile';
                 img.alt = `Tile ${tile.number}`;
 
-                if (!isEmptyTile) div.addEventListener('click', puzzleGame.moveTile);
+                if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
                 else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
 
                 // Fallback: Use predefined image paths if not split yet
-                img.src = tile.revealed ? storedPieces && storedPieces[tile.number - 1] || `${imagePath.revealed}${tile.number || 16}.png`
-                    : firstUnrevealedTileFound ? imagePath.questionMark
+                img.src = tile.covered ? imagePath.questionMark
+                    : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`//storedPieces && storedPieces[tile.number - 1] ||
                         : `${imagePath.hidden}${tile.initialOrder}.png`;
 
                 if (tile.initialOrder === 7)
-                    showTestEdit = !tile.revealed && !firstUnrevealedTileFound;
-                setCodeInputVisible(showTestEdit || puzzleGame.cheatsEnabled());
+                    showTextEdit = !tile.revealed && !firstUnrevealedTileFound;
+                setCodeInputVisible(showTextEdit || puzzleGame.cheatsEnabled());
                 if (!tile.revealed) firstUnrevealedTileFound = true;
-                if (!tile.revealed || !isEmptyTile || isLastPuzzleTile) div.appendChild(img);
+                if (!tile.revealed || !tile.empty || isLastPuzzleTile) div.appendChild(img);
 
                 div.dataset.row = rowIndex;
                 div.dataset.col = cellIndex;
@@ -166,7 +165,7 @@ const puzzleGame = {
         const headerText = document.getElementById('headerText');
         const noteMantis = document.getElementById('note2');
         const noteMantisLink = document.getElementById('noteLink2');
-        
+
         if (puzzleGame.state.unlocked) {
             headerText.innerText = "Збери мапу";
             noteMantis.style.display = 'none';
@@ -186,39 +185,31 @@ const puzzleGame = {
         if (code === normalize(puzzleGame.setting().codesMap.cheatSolve)) return cheat.solveGame();
         if (code === normalize(puzzleGame.setting().codesMap.cheatSolveAlmoust)) return cheat.solveAndLeaveLastMove()
 
-        const tilesState = Object.values(puzzleGame.setting().codesMap);
-        const tile = tilesState.find(t => normalize(t.code || '') === code)
+        const tile = Object.values(puzzleGame.setting().codesMap)
+            .find(t => normalize(t.code || '') === code)
             || puzzleGame.cheatsEnabled() && puzzleGame.setting().codesMap[`tile${code}`];
 
         if (!tile || !tile.number) {
             alert(gameMessages.invalidCode);
             return;
         }
-
-        if (tile.revealed) return;
-        if (tile.number == 1) puzzleGame.revealTile(tile);
-        else {
-            const previousTile = puzzleGame.state.puzzle.flat().find(t => t.initialOrder == tile.number - 1)
-            if (!previousTile) {
-                alert(gameMessages.previousTileNotFound);
-                return;
-            } else if (!previousTile.revealed) {
-                alert(gameMessages.previousTileNotRevealed);
-                return;
-            } else puzzleGame.revealTile(tile);
+        puzzleGame.revealTile(tile);
+    },
+    revealTile({ number: tileNumber }) {
+        const tile = puzzleGame.state.puzzle.flat().find(tile => tile.initialOrder == tileNumber);
+        const nextTile = puzzleGame.state.puzzle.flat().find(tile => tile.initialOrder == tileNumber + 1);
+        if (!tile || tile.revealed) return;
+        if (tile.covered) {
+            alert(gameMessages.previousTileNotRevealed);
+            return;
         }
-
+        tile.revealed = true;
+        if (nextTile) nextTile.covered = false;
         if (puzzleGame.state.puzzle.flat().every(tile => tile.revealed)) {
             puzzleGame.state.unlocked = true;
             setCodeInputVisible(false);
             alert(gameMessages.allTilesRevealed);
         }
-        puzzleGame.saveState();
-    },
-    revealTile({ number: tileNumber }) {
-        const tile = puzzleGame.state.puzzle.flat().find(tile => tile.initialOrder == tileNumber);
-        if (!tile) return;
-        tile.revealed = true;
         puzzleGame.saveState();
         puzzleGame.render();
     },
@@ -240,9 +231,7 @@ const puzzleGame = {
         if (!puzzleGame.state.unlocked) return;
 
         let target = event.target;
-        if (target.tagName === 'IMG') {
-            target = target.parentElement; // If the target is an image, get its parent div
-        }
+        if (target.tagName === 'IMG') target = target.parentElement; // If the target is an image, get its parent div
 
         let row = parseInt(target.dataset.row);
         let col = parseInt(target.dataset.col);
@@ -251,6 +240,7 @@ const puzzleGame = {
         if (isAdjacent(row, col, emptyPos.row, emptyPos.col)) {
             [puzzleGame.state.puzzle[row][col], puzzleGame.state.puzzle[emptyPos.row][emptyPos.col]] =
                 [puzzleGame.state.puzzle[emptyPos.row][emptyPos.col], puzzleGame.state.puzzle[row][col]];
+            
             puzzleGame.saveState();
             puzzleGame.render();
             puzzleGame.checkWin();
