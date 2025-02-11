@@ -166,6 +166,7 @@ const puzzleGame = {
         const headerText = document.getElementById('headerText');
         const noteMantis = document.getElementById('note2');
         const noteMantisLink = document.getElementById('noteLink2');
+        puzzleGame.loadState();
         if (puzzleGame.state.unlocked) {
             headerText.innerText = "Збери мапу";
             noteMantis.style.display = 'none';
@@ -175,7 +176,6 @@ const puzzleGame = {
             noteMantis.style.display = 'block';
             noteMantisLink.style.display = 'block';
         }
-
         puzzleGame.saveState();
     },
     enterCode(code) {
