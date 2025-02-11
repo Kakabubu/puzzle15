@@ -34,7 +34,7 @@ const puzzleGame = {
             size, emptyTileNumber, lastTileNumber, totalTiles,
             codesMap: {
                 tile1: { code: 'contidion478', number: 1 },
-                tile2: { code: 'sock729', number: 2 },//CHANGE
+                tile2: { code: 'sofa729', number: 2 },//CHANGE
                 tile3: { code: 'tv557', number: 3 },
                 tile4: { code: 'bed951', number: 4 },
                 tile5: { code: 'owl741', number: 5 },
@@ -44,7 +44,7 @@ const puzzleGame = {
                 tile9: { code: 'door512', number: 9 },//CHANGE
                 tile10: { code: 'mazda777', number: 10 },
                 tile11: { code: 'slide749', number: 11 },
-                tile12: { code: 'mirror000', number: 12 },//CHANGE
+                tile12: { code: 'shelf000', number: 12 },//CHANGE
                 tile13: { code: 'bath105', number: 13 },
                 tile14: { code: 'pipe771', number: 14 },
                 tile15: { code: 'oven442', number: 15 },
@@ -255,6 +255,9 @@ const puzzleGame = {
             puzzleGame.state.solved = true;
             puzzleGame.animateWin();
         }
+    },
+    animateReveal() {
+        
     },
     animateWin() {
         const container = document.getElementById(elementIds.puzzleContainer);
