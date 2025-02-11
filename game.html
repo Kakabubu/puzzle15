@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Solve me</title>
+  <title>Find your path</title>
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
   <script src="config.dev.js"></script>
@@ -12,9 +12,15 @@
 
 <body>
   <input type="button" id="mainPageButton" value="⤺">
-  <h1>Виріши мене</h1>
-  <input type="text" id="codeInput" placeholder="Enter code..." autocomplete="off">
+  <div class="header-container">
+    <h1 id="headerText">Шукай шлях</h1>
+    <a href="#note1" id="noteLink2" class="noteLink">*</a>
+  </div>
+  <input type="text" id="codeInput" placeholder="Введи код..." autocomplete="off">
   <div id="puzzle-container"></div>
+  <p id="note2" class="note">
+    <i>* Прямуй за богомолами, вони приведуть тебе до цілі</i>.
+  </p>
 </body>
 
 </html>

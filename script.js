@@ -65,23 +65,23 @@ const puzzleGame = {
             return arr;
         };
         function isSolvable(numbers) {
-            function getInvCount(arr) {
-                let inv_count = 0;
+            function getInversionsCount(arr) {
+                let inversionsCount = 0;
                 for (let i = 0; i < arr.length - 1; i++) {
                     for (let j = i + 1; j < arr.length; j++) {
-                        if (arr[j] && arr[i] && arr[i] > arr[j]) inv_count++;
+                        if (arr[j] && arr[i] && arr[i] > arr[j]) inversionsCount++;
                     }
                 }
-                return inv_count;
+                return inversionsCount;
             };
-            function findXPosition(flatPuzzle) {
-                let index = flatPuzzle.indexOf(puzzleGame.setting().emptyTileNumber);
-                return puzzleGame.setting().size - Math.floor(index / puzzleGame.setting().size);
+            function findEmptyTileXPosition(flatPuzzle) {
+                let emptyTileIndex = flatPuzzle.indexOf(puzzleGame.setting().emptyTileNumber);
+                return puzzleGame.setting().size - Math.floor(emptyTileIndex / puzzleGame.setting().size);
             };
-            let invCount = getInvCount(numbers);
-            if (puzzleGame.setting().size % 2 === 1) return invCount % 2 === 0;
-            let pos = findXPosition(numbers);
-            return (pos % 2 === 1) === (invCount % 2 === 0);
+            const inversionsCount = getInversionsCount(numbers);
+
+            if (puzzleGame.setting().size % 2 === 1) return inversionsCount % 2 === 0;
+            return (findEmptyTileXPosition(numbers) % 2 === 1) === (inversionsCount % 2 === 0);
         };
         let numbers = [...Array(puzzleGame.setting().totalTiles).keys()].map(x => x + 1);
         do {
@@ -142,10 +142,8 @@ const puzzleGame = {
                 div.className = 'tile';
                 img.alt = `Tile ${tile.number}`;
 
-                if (isEmptyTile) {
-                    div.classList.add('empty');
-                    if (isLastPuzzleTile && tile.revealed) div.classList.add('background');
-                } else div.addEventListener('click', puzzleGame.moveTile);
+                if (!isEmptyTile) div.addEventListener('click', puzzleGame.moveTile);
+                else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
 
                 // Fallback: Use predefined image paths if not split yet
                 img.src = tile.revealed ? storedPieces && storedPieces[tile.number - 1] || `${imagePath.revealed}${tile.number || 16}.png`
@@ -163,11 +161,26 @@ const puzzleGame = {
                 container.appendChild(div);
             });
         });
+
+        // Update header text and subtitle based on game state
+        const headerText = document.getElementById('headerText');
+        const noteMantis = document.getElementById('note2');
+        const noteMantisLink = document.getElementById('noteLink2');
+        if (puzzleGame.state.unlocked) {
+            headerText.innerText = "Збери мапу";
+            noteMantis.style.display = 'none';
+            noteMantisLink.style.display = 'none';
+        } else {
+            headerText.innerText = "Шукай шлях";
+            noteMantis.style.display = 'block';
+            noteMantisLink.style.display = 'block';
+        }
+
         puzzleGame.saveState();
     },
     enterCode(code) {
 
-        const normalize = (str) => str.toLowerCase().replace(/\s+/g, '');
+        const normalize = (str) => `${str}`.toLowerCase().replace(/\s+/g, '');
 
         code = normalize(code);
         if (code === normalize(puzzleGame.setting().codesMap.cheatReveal)) return cheat.revealAllTiles();
@@ -257,7 +270,7 @@ const puzzleGame = {
         }
     },
     animateReveal() {
-        
+
     },
     animateWin() {
         const container = document.getElementById(elementIds.puzzleContainer);
