@@ -34,17 +34,17 @@ const puzzleGame = {
             size, emptyTileNumber, lastTileNumber, totalTiles,
             codesMap: {
                 tile1: { code: 'contidion478', number: 1 },
-                tile2: { code: 'sofa729', number: 2 },//CHANGE
+                tile2: { code: 'sofa729', number: 2 },
                 tile3: { code: 'tv557', number: 3 },
                 tile4: { code: 'bed951', number: 4 },
                 tile5: { code: 'owl741', number: 5 },
                 tile6: { code: 'electr444', number: 6 },
                 tile7: { code: 'ДанилоАнтонович709', number: 7 },
                 tile8: { code: 'elevator123', number: 8 },
-                tile9: { code: 'door512', number: 9 },//CHANGE
+                tile9: { code: 'door512', number: 9 },
                 tile10: { code: 'mazda777', number: 10 },
                 tile11: { code: 'slide749', number: 11 },
-                tile12: { code: 'shelf000', number: 12 },//CHANGE
+                tile12: { code: 'shelf000', number: 12 },
                 tile13: { code: 'bath105', number: 13 },
                 tile14: { code: 'pipe771', number: 14 },
                 tile15: { code: 'oven442', number: 15 },
@@ -215,7 +215,6 @@ const puzzleGame = {
         let firstUnrevealedTileFound = false;
         puzzleGame.loadState();
 
-        // Load split image pieces from localStorage//const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
         let showTextEdit = false;
         puzzleGame.state.puzzle.forEach((row, rowIndex) => {
             row.forEach((tile, cellIndex) => {
@@ -228,9 +227,8 @@ const puzzleGame = {
                 if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
                 else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
 
-                // Fallback: Use predefined image paths if not split yet
                 img.src = tile.covered ? imagePath.questionMark
-                    : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`//storedPieces && storedPieces[tile.number - 1] ||
+                    : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`
                         : `${imagePath.hidden}${tile.initialOrder}.png`;
 
                 if (tile.initialOrder === 7)
@@ -348,52 +346,6 @@ const cheat = {
         puzzleGame.saveState();
     },
     solveAndLeaveLastMove: () => cheat.solveGame(true)
-};
-
-const imageSlicer = {
-    loadPuzzlePieces() {
-        return false;
-        if (puzzleGame.state.imagePieces) return puzzleGame.state.imagePieces;
-        let pieces = localStorage.getItem('puzzlePieces');
-        if (pieces) puzzleGame.state.imagePieces = pieces;
-        else imageSlicer.slice(`${imagePath.revealed}full.png`).then((pieces) => {
-            uzzleGame.state.imagePieces = pieces;
-        });
-        return pieces ? JSON.parse(pieces) : null;
-    },
-    // slice(imageSrc, gridSize = puzzleGame.setting().size) {
-    //     return new Promise((resolve) => {
-    //         const img = new Image();
-    //         img.crossOrigin = 'anonymous'; // Required if loading external images
-    //         img.src = imageSrc;
-    //         img.onload = () => {
-    //             const pieceWidth = img.width / gridSize;
-    //             const pieceHeight = img.height / gridSize;
-    //             const canvas = document.createElement('canvas');
-    //             const ctx = canvas.getContext('2d');
-
-    //             let pieces = [];
-
-    //             for (let row = 0; row < gridSize; row++) {
-    //                 for (let col = 0; col < gridSize; col++) {
-    //                     canvas.width = pieceWidth;
-    //                     canvas.height = pieceHeight;
-    //                     ctx.clearRect(0, 0, pieceWidth, pieceHeight);
-    //                     ctx.drawImage(
-    //                         img,
-    //                         col * pieceWidth, row * pieceHeight, pieceWidth, pieceHeight, // Source
-    //                         0, 0, pieceWidth, pieceHeight // Destination
-    //                     );
-    //                     const base64 = canvas.toDataURL();
-    //                     pieces.push(base64);
-    //                 }
-    //             }
-
-    //             localStorage.setItem('puzzlePieces', JSON.stringify(pieces)); // Store in localStorage
-    //             resolve(pieces);
-    //         };
-    //     });
-    // }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
