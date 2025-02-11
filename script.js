@@ -125,57 +125,6 @@ const puzzleGame = {
         }
         puzzleGame.render();
     },
-    render() {
-        const container = document.getElementById(elementIds.puzzleContainer);
-        container.innerHTML = '';
-        let firstUnrevealedTileFound = false;
-        puzzleGame.loadState();
-
-        // Load split image pieces from localStorage//const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
-        let showTextEdit = false;
-        puzzleGame.state.puzzle.forEach((row, rowIndex) => {
-            row.forEach((tile, cellIndex) => {
-                const isLastPuzzleTile = rowIndex === puzzleGame.state.puzzle.length - 1 && cellIndex === row.length - 1;
-                const div = document.createElement('div'), img = document.createElement('img');
-
-                div.className = 'tile';
-                img.alt = `Tile ${tile.number}`;
-
-                if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
-                else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
-
-                // Fallback: Use predefined image paths if not split yet
-                img.src = tile.covered ? imagePath.questionMark
-                    : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`//storedPieces && storedPieces[tile.number - 1] ||
-                        : `${imagePath.hidden}${tile.initialOrder}.png`;
-
-                if (tile.initialOrder === 7)
-                    showTextEdit = !tile.revealed && !firstUnrevealedTileFound;
-                setCodeInputVisible(showTextEdit || puzzleGame.cheatsEnabled());
-                if (!tile.revealed) firstUnrevealedTileFound = true;
-                if (!tile.revealed || !tile.empty || isLastPuzzleTile) div.appendChild(img);
-
-                div.dataset.row = rowIndex;
-                div.dataset.col = cellIndex;
-                container.appendChild(div);
-            });
-        });
-
-        // Update header text and subtitle based on game state
-        const headerText = document.getElementById('headerText');
-        const noteMantis = document.getElementById('note2');
-        const noteMantisLink = document.getElementById('noteLink2');
-
-        if (puzzleGame.state.unlocked) {
-            headerText.innerText = "Збери мапу";
-            noteMantis.style.display = 'none';
-            noteMantisLink.style.display = 'none';
-        } else {
-            headerText.innerText = "Шукай шлях";
-            noteMantis.style.display = 'block';
-            noteMantisLink.style.display = 'block';
-        }
-    },
     enterCode(code) {
 
         const normalize = (str) => `${str}`.toLowerCase().replace(/\s+/g, '');
@@ -240,7 +189,7 @@ const puzzleGame = {
         if (isAdjacent(row, col, emptyPos.row, emptyPos.col)) {
             [puzzleGame.state.puzzle[row][col], puzzleGame.state.puzzle[emptyPos.row][emptyPos.col]] =
                 [puzzleGame.state.puzzle[emptyPos.row][emptyPos.col], puzzleGame.state.puzzle[row][col]];
-            
+
             puzzleGame.saveState();
             puzzleGame.render();
             puzzleGame.checkWin();
@@ -258,6 +207,57 @@ const puzzleGame = {
             puzzleGame.state.solved = true;
             puzzleGame.saveState();
             puzzleGame.animateWin();
+        }
+    },
+    render() {
+        const container = document.getElementById(elementIds.puzzleContainer);
+        container.innerHTML = '';
+        let firstUnrevealedTileFound = false;
+        puzzleGame.loadState();
+
+        // Load split image pieces from localStorage//const storedPieces = false && imageSlicer.loadPuzzlePieces(); // Returns an array of base64 images
+        let showTextEdit = false;
+        puzzleGame.state.puzzle.forEach((row, rowIndex) => {
+            row.forEach((tile, cellIndex) => {
+                const isLastPuzzleTile = rowIndex === puzzleGame.state.puzzle.length - 1 && cellIndex === row.length - 1;
+                const div = document.createElement('div'), img = document.createElement('img');
+
+                div.className = 'tile';
+                img.alt = `Tile ${tile.number}`;
+
+                if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
+                else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
+
+                // Fallback: Use predefined image paths if not split yet
+                img.src = tile.covered ? imagePath.questionMark
+                    : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`//storedPieces && storedPieces[tile.number - 1] ||
+                        : `${imagePath.hidden}${tile.initialOrder}.png`;
+
+                if (tile.initialOrder === 7)
+                    showTextEdit = !tile.revealed && !firstUnrevealedTileFound;
+                setCodeInputVisible(showTextEdit || puzzleGame.cheatsEnabled());
+                if (!tile.revealed) firstUnrevealedTileFound = true;
+                if (!tile.revealed || !tile.empty || isLastPuzzleTile) div.appendChild(img);
+
+                div.dataset.row = rowIndex;
+                div.dataset.col = cellIndex;
+                container.appendChild(div);
+            });
+        });
+
+        // Update header text and subtitle based on game state
+        const headerText = document.getElementById('headerText');
+        const noteMantis = document.getElementById('note2');
+        const noteMantisLink = document.getElementById('noteLink2');
+
+        if (puzzleGame.state.unlocked) {
+            headerText.innerText = "Збери мапу";
+            noteMantis.style.display = 'none';
+            noteMantisLink.style.display = 'none';
+        } else {
+            headerText.innerText = "Шукай шлях";
+            noteMantis.style.display = 'block';
+            noteMantisLink.style.display = 'block';
         }
     },
     animateReveal() {
