@@ -176,7 +176,6 @@ const puzzleGame = {
             noteMantis.style.display = 'block';
             noteMantisLink.style.display = 'block';
         }
-        puzzleGame.saveState();
     },
     enterCode(code) {
 
@@ -220,6 +219,7 @@ const puzzleGame = {
         const tile = puzzleGame.state.puzzle.flat().find(tile => tile.initialOrder == tileNumber);
         if (!tile) return;
         tile.revealed = true;
+        puzzleGame.saveState();
         puzzleGame.render();
     },
     moveTile(event) {
@@ -251,10 +251,10 @@ const puzzleGame = {
         if (isAdjacent(row, col, emptyPos.row, emptyPos.col)) {
             [puzzleGame.state.puzzle[row][col], puzzleGame.state.puzzle[emptyPos.row][emptyPos.col]] =
                 [puzzleGame.state.puzzle[emptyPos.row][emptyPos.col], puzzleGame.state.puzzle[row][col]];
+            puzzleGame.saveState();
             puzzleGame.render();
             puzzleGame.checkWin();
-        }
-        puzzleGame.saveState();
+        } else puzzleGame.saveState();
     },
     checkWin() {
         const flatPuzzle = puzzleGame.state.puzzle.flat().map(t => t.number);
@@ -266,6 +266,7 @@ const puzzleGame = {
             alert(gameMessages.win);
             localStorage.removeItem(elementIds.storageState);
             puzzleGame.state.solved = true;
+            puzzleGame.saveState();
             puzzleGame.animateWin();
         }
     },
