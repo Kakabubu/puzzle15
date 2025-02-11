@@ -18,6 +18,11 @@
         На тебе чекає нагорода немаленького розміру, тож знайти її буде не <span style="color: #98CDCC;">важко</span>,
         звісно, якщо шукати там де ти ще не шукала.
     </p>
+    <script>
+        if (localStorage.getItem("isAuthorized") !== "true") {
+            document.body.innerHTML = "<h1>Вибачте, але ця гра не для вас</h1>";
+        }
+    </script>
 </body>
 
 </html>

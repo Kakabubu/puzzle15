@@ -21,6 +21,11 @@
   <p id="note2" class="note">
     <i>* Прямуй за богомолами, вони приведуть тебе до цілі</i>.
   </p>
+  <script>
+    if (localStorage.getItem("isAuthorized") !== "true") {
+      document.body.innerHTML = "<h1>Вибачте, але ця гра не для вас</h1>";
+    }
+  </script>
 </body>
 
 </html>

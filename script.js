@@ -24,6 +24,9 @@ const gameMessages = {
     confirmReset: "Почати гру наново, чи продовжити попередню? (Cancel щоб продовжити попередню)"
 }
 
+const authorizationCode = "authorizekate36";
+const authorizationKey = "isAuthorized";
+
 const puzzleGame = {
     setting() {
         const size = 4, emptyTileNumber = 0;
@@ -130,6 +133,10 @@ const puzzleGame = {
         const normalize = (str) => `${str}`.toLowerCase().replace(/\s+/g, '');
 
         code = normalize(code);
+        if (!puzzleGame.isAuthorized()) {
+            alert("You need to authorize first.");
+            return;
+        }
         if (code === normalize(puzzleGame.setting().codesMap.cheatReveal)) return cheat.revealAllTiles();
         if (code === normalize(puzzleGame.setting().codesMap.cheatSolve)) return cheat.solveGame();
         if (code === normalize(puzzleGame.setting().codesMap.cheatSolveAlmoust)) return cheat.solveAndLeaveLastMove()
@@ -143,6 +150,9 @@ const puzzleGame = {
             return;
         }
         puzzleGame.revealTile(tile);
+    },
+    isAuthorized() {
+        return localStorage.getItem(authorizationKey) === "true";
     },
     revealTile({ number: tileNumber }) {
         const tile = puzzleGame.state.puzzle.flat().find(tile => tile.initialOrder == tileNumber);
@@ -210,6 +220,10 @@ const puzzleGame = {
         }
     },
     render() {
+        if (!puzzleGame.isAuthorized()) {
+            alert("Вибачте, але ця гра не для вас");
+            return;
+        }
         const container = document.getElementById(elementIds.puzzleContainer);
         container.innerHTML = '';
         let firstUnrevealedTileFound = false;
@@ -350,6 +364,12 @@ const cheat = {
 
 document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('startButton');
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has(authorizationCode)) {
+        localStorage.setItem(authorizationKey, true);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        location.reload(); // Reload the page after authorization
+    }
     if (startButton) {
         document.getElementById('startButtonText')
             .innerText
@@ -364,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mainPageButton) mainPageButton.addEventListener('click', page.open.main);
     puzzleGame.loadState();
     puzzleGame.render();
-    const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const inputBox = document.getElementById(elementIds.codeInput);
     inputBox.addEventListener('keydown', keydown);
