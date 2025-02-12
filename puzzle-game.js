@@ -70,7 +70,7 @@ const puzzleGame = {
       for (let col = 0; col < puzzleGame.setting().size; col++) {
         isLastTile = initialOrder > puzzleGame.setting().totalTiles;
         let tile = {
-          number: isLastTile ? puzzleGame.setting().emptyTileNumber : numbers[initialOrder],
+          number: isLastTile ? puzzleGame.setting().emptyTileNumber : numbers[initialOrder - 1],
           initialOrder, revealed: false, covered: initialOrder != 1, empty: isLastTile,
           codeManualInput: codesToBeInputManually.includes(initialOrder)
         };
@@ -206,11 +206,13 @@ const puzzleGame = {
     puzzleGame.loadState();
 
     let showTextEdit = false;
+    let tileNumbers = [];
+
     puzzleGame.state.puzzle.forEach((row, rowIndex) => {
       row.forEach((tile, cellIndex) => {
         const isLastPuzzleTile = rowIndex === puzzleGame.state.puzzle.length - 1 && cellIndex === row.length - 1;
         const div = document.createElement('div'), img = document.createElement('img');
-
+        const tileNumber = tile.number || 16;
         div.className = 'tile';
         img.alt = `Tile ${tile.number}`;
 
@@ -218,7 +220,7 @@ const puzzleGame = {
         else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
 
         img.src = tile.covered ? imagePath.questionMark
-          : tile.revealed ? `${imagePath.revealed}${tile.number || 16}.png`
+          : tile.revealed ? `${imagePath.revealed}${tileNumber}.png`
             : `${imagePath.hidden}${tile.initialOrder}.png`;
 
         if (tile.codeManualInput && !(tile.revealed || tile.covered))
@@ -232,7 +234,6 @@ const puzzleGame = {
         container.appendChild(div);
       });
     });
-
     // Update header text and subtitle based on game state
     const headerText = document.getElementById(pageMapping.elements.headerText);
     const noteMantis = document.getElementById(pageMapping.elements.note2);
@@ -300,11 +301,11 @@ const cheat = {
   revealAllTiles() {
     if (!puzzleGame.cheatsEnabled()) return;
     alert(localization.messages.cheatAllTilesRevealed);
-    puzzleGame.state.puzzle.flat().forEach(tile => tile.revealed = true);
+    puzzleGame.state.puzzle.flat().forEach(tile => tile.revealed = true, tile.covered = false);
     puzzleGame.state.unlocked = true;
     setCodeInputVisible(false);
-    puzzleGame.render();
     puzzleGame.saveState();
+    puzzleGame.render();
   },
   solveGame(withLastMove = false) {
     if (!puzzleGame.cheatsEnabled()) return;
@@ -320,13 +321,13 @@ const cheat = {
 
     for (let row = 0; row < puzzleGame.setting().size; row++) {
       for (let col = 0; col < puzzleGame.setting().size; col++) {
-        puzzleGame.state.puzzle[row][col] = { number: correct[index], initialOrder: index + 1, revealed: true };
+        puzzleGame.state.puzzle[row][col] = { number: correct[index], initialOrder: index + 1, revealed: true, covered: false };
         index++;
       }
     }
-    puzzleGame.render();
-    puzzleGame.checkWin();
     puzzleGame.saveState();
+    puzzleGame.checkWin();
+    puzzleGame.render();
   },
   solveAndLeaveLastMove: () => cheat.solveGame(true),
   codes: {
