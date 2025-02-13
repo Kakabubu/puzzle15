@@ -95,11 +95,12 @@ const puzzleGame = {
       return;
     }
     const savedState = JSON.parse(savedStateJSON);
-    if (savedState.version != puzzleGame.state.version) return puzzleGame.reset(true)
+    if (savedState.version != puzzleGame.state.version)
+      return puzzleGame.reset({ force: true })
     puzzleGame.state.puzzle = savedState.puzzle || [];
     puzzleGame.state.unlocked = savedState.unlocked || false;
   },
-  reset(force = false) {
+  reset({ force = false }) {
     pageMapping.open.game();
     if (force || confirm(localization.messages.confirmReset)) {
       if (force) alert(localization.messages.forceReset);
