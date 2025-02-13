@@ -28,7 +28,7 @@ const puzzleGame = {
       ]
     }
   },
-  state: { puzzle: [], unlocked: false, solved: false, revealedPiecesSource: [] },
+  state: { puzzle: [], unlocked: false, solved: false, version: '1.0.0.0' },
   generate() {
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -68,12 +68,17 @@ const puzzleGame = {
 
     for (let row = 0, initialOrder = 1; row < puzzleGame.setting().size; row++) {
       for (let col = 0; col < puzzleGame.setting().size; col++) {
-        isLastTile = initialOrder > puzzleGame.setting().totalTiles;
+        const isLastTile = initialOrder > puzzleGame.setting().totalTiles;
         let tile = {
           number: isLastTile ? puzzleGame.setting().emptyTileNumber : numbers[initialOrder - 1],
           initialOrder, revealed: false, covered: initialOrder != 1, empty: isLastTile,
           codeManualInput: codesToBeInputManually.includes(initialOrder)
         };
+        tile.imagePath = {
+          revealed: `${imagePath.revealed}${tile.number || 16}${imagePath.imageFormat}`,
+          hidden: `${imagePath.hidden}${tile.initialOrder}${imagePath.imageFormat}`,
+          inPreviousState: ''
+        }
         initialOrder++;
         puzzleGame.state.puzzle[row][col] = tile;
       }
@@ -90,12 +95,14 @@ const puzzleGame = {
       return;
     }
     const savedState = JSON.parse(savedStateJSON);
+    if (savedState.version != puzzleGame.state.version) return puzzleGame.reset(true)
     puzzleGame.state.puzzle = savedState.puzzle || [];
     puzzleGame.state.unlocked = savedState.unlocked || false;
   },
-  reset() {
+  reset(force = false) {
     pageMapping.open.game();
-    if (confirm(localization.messages.confirmReset)) {
+    if (force || confirm(localization.messages.confirmReset)) {
+      if (force) alert(localization.messages.forceReset);
       localStorage.removeItem(pageMapping.elements.storageState);
       setCodeInputVisible(puzzleGame.cheatsEnabled());
       puzzleGame.generate();
@@ -137,7 +144,11 @@ const puzzleGame = {
       return;
     }
     tile.revealed = true;
-    if (nextTile) nextTile.covered = false;
+    tile.imagePath.inPreviousState = tile.imagePath.hidden;
+    if (nextTile) {
+      nextTile.covered = false;
+      nextTile.imagePath.inPreviousState = imagePath.questionMark;
+    }
     puzzleGame.saveState();
     puzzleGame.checkAllRevealed();
     puzzleGame.render();
@@ -183,7 +194,7 @@ const puzzleGame = {
 
     if (isCorrect) {
       alert(localization.messages.win);
-      localStorage.removeItem(pageMapping.elements.storageState);
+      //localStorage.removeItem(pageMapping.elements.storageState);
       puzzleGame.state.solved = true;
       puzzleGame.saveState();
       puzzleGame.animateWin();
@@ -206,33 +217,28 @@ const puzzleGame = {
     puzzleGame.loadState();
 
     let showTextEdit = false;
-    let tileNumbers = [];
+    puzzleGame.state.puzzle.flat().forEach((tile, tileIndex, currentArray) => {
+      const isLastPuzzleTile = tileIndex === currentArray.length - 1;
+      if (tile.codeManualInput && !(tile.revealed || tile.covered))
+        showTextEdit = true;
+      setCodeInputVisible(showTextEdit || puzzleGame.cheatsEnabled());
+      const div = document.createElement('div');
+      div.className = 'tile';
+      const img = document.createElement('img');
+      if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
+      else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
+      const pathRevealed = tile && tile.imagePath && tile.imagePath.revealed || '';
+      const pathHidden = tile && tile.imagePath && tile.imagePath.hidden || ''
+      const newImage = tile.covered ? imagePath.questionMark
+        : tile.revealed ? pathRevealed : pathHidden;
+      img.alt = `Tile ${tile.number}`;
+      img.src = newImage;
+      if (!tile.revealed || !tile.empty || isLastPuzzleTile) div.appendChild(img);
+      if (tile.imagePath.inPreviousState != '') puzzleGame.animateReveal(tile, div);
 
-    puzzleGame.state.puzzle.forEach((row, rowIndex) => {
-      row.forEach((tile, cellIndex) => {
-        const isLastPuzzleTile = rowIndex === puzzleGame.state.puzzle.length - 1 && cellIndex === row.length - 1;
-        const div = document.createElement('div'), img = document.createElement('img');
-        const tileNumber = tile.number || 16;
-        div.className = 'tile';
-        img.alt = `Tile ${tile.number}`;
-
-        if (!tile.empty) div.addEventListener('click', puzzleGame.moveTile);
-        else if (isLastPuzzleTile && tile.revealed) img.classList.add('background');
-
-        img.src = tile.covered ? imagePath.questionMark
-          : tile.revealed ? `${imagePath.revealed}${tileNumber}.png`
-            : `${imagePath.hidden}${tile.initialOrder}.png`;
-
-        if (tile.codeManualInput && !(tile.revealed || tile.covered))
-          showTextEdit = true;
-        setCodeInputVisible(showTextEdit || puzzleGame.cheatsEnabled());
-
-        if (!tile.revealed || !tile.empty || isLastPuzzleTile) div.appendChild(img);
-
-        div.dataset.row = rowIndex;
-        div.dataset.col = cellIndex;
-        container.appendChild(div);
-      });
+      div.dataset.row = Math.trunc(tileIndex / puzzleGame.setting().size);
+      div.dataset.col = tileIndex % puzzleGame.setting().size;
+      container.appendChild(div);
     });
     // Update header text and subtitle based on game state
     const headerText = document.getElementById(pageMapping.elements.headerText);
@@ -240,17 +246,37 @@ const puzzleGame = {
     const noteMantisLink = document.getElementById(pageMapping.elements.noteLink2);
 
     if (puzzleGame.state.unlocked) {
-      headerText.innerText = "Збери мапу";
+      headerText.innerText = localization.headers.gamePuzzle15;
       noteMantis.style.display = 'none';
       noteMantisLink.style.display = 'none';
     } else {
-      headerText.innerText = "Шукай шлях";
+      headerText.innerText = localization.headers.gameRevealTiles;
       noteMantis.style.display = 'block';
       noteMantisLink.style.display = 'block';
     }
   },
-  animateReveal() {
+  animateReveal(tile, div) {
+    // Queue animation for changing tile image
+    const timeout = 1000;
+    const delay = tile.imagePath.inPreviousState === imagePath.questionMark ? timeout : 0; // Delay before animation starts
+    const previousImage = document.createElement('img');
+    previousImage.src = tile.imagePath.inPreviousState;
+    previousImage.style.position = 'absolute';
+    previousImage.style.transition = `opacity ${parseFloat(timeout / 1000)}s ease-in-out`;
+    previousImage.style.opacity = '1';
 
+    div.appendChild(previousImage);
+
+    setTimeout(() => {
+      previousImage.style.opacity = '0';
+      setTimeout(() => {
+        div.removeChild(previousImage);
+      }, timeout);
+    }, delay);
+
+    tile.imagePath.inPreviousState = '';
+    puzzleGame.saveState();
+    return tile;
   },
   animateWin() {
     const container = document.getElementById(pageMapping.elements.puzzleContainer);
@@ -278,7 +304,7 @@ const puzzleGame = {
     }
 
     // Remove the background class from the last tile
-    const lastTile = container.querySelector('.tile.background');
+    const lastTile = container.querySelector('img.background');
     if (lastTile) {
       lastTile.style.transition = 'opacity 0.8s ease-in-out';
       lastTile.style.opacity = '1';
@@ -301,7 +327,7 @@ const cheat = {
   revealAllTiles() {
     if (!puzzleGame.cheatsEnabled()) return;
     alert(localization.messages.cheatAllTilesRevealed);
-    puzzleGame.state.puzzle.flat().forEach(tile => tile.revealed = true, tile.covered = false);
+    puzzleGame.state.puzzle.flat().forEach(tile => (tile.revealed = true, tile.covered = false));
     puzzleGame.state.unlocked = true;
     setCodeInputVisible(false);
     puzzleGame.saveState();
@@ -310,21 +336,21 @@ const cheat = {
   solveGame(withLastMove = false) {
     if (!puzzleGame.cheatsEnabled()) return;
     alert(localization.messages.cheatPuzzleSolved);
-    const correct = [...Array(puzzleGame.setting().totalTiles).keys()].map(x => x + 1);
-    correct.push(puzzleGame.setting().emptyTileNumber);
-    if (withLastMove) {
-      const lastIndex = correct.length - 1;
-      [correct[lastIndex], correct[lastIndex - 1]] = [correct[lastIndex - 1], correct[lastIndex]];
-    }
-    puzzleGame.state.puzzle = Array(puzzleGame.setting().size).fill().map(() => Array(puzzleGame.setting().size).fill(null));
-    let index = 0;
 
-    for (let row = 0; row < puzzleGame.setting().size; row++) {
+    const flatPuzzle = puzzleGame.state.puzzle.flat();
+    flatPuzzle.sort((a, b) => a.number - b.number);
+    flatPuzzle.push(flatPuzzle.shift());
+    if (withLastMove) flatPuzzle.push(flatPuzzle.splice(flatPuzzle.length - 2, 1)[0])
+
+    for (let row = 0, index = 0; row < puzzleGame.setting().size; row++) {
       for (let col = 0; col < puzzleGame.setting().size; col++) {
-        puzzleGame.state.puzzle[row][col] = { number: correct[index], initialOrder: index + 1, revealed: true, covered: false };
-        index++;
+        const tile = flatPuzzle[index++];
+        tile.revealed = true;
+        tile.covered = false;
+        puzzleGame.state.puzzle[row][col] = tile;
       }
     }
+
     puzzleGame.saveState();
     puzzleGame.checkWin();
     puzzleGame.render();

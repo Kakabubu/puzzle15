@@ -1,7 +1,8 @@
 const imagePath = {
-    hidden: 'images/hidden/', // Folder for hidden images
-    revealed: 'images/revealed/', // Folder for revealed images
-    questionMark: 'images/question.png' // Image for hidden tiles
+    hidden: 'images/hidden/',
+    revealed: 'images/revealed/',
+    questionMark: 'images/question.png',
+    imageFormat: '.png'
 };
 
 const localization = {
@@ -14,10 +15,15 @@ const localization = {
         cheatAllTilesRevealed: 'ЧітКод Активовано: всі пазли розблоковані!',
         cheatPuzzleSolved: "ЧітКод Активовано: пазл розв'язано!",
         confirmReset: "Почати гру наново, чи продовжити попередню? (Cancel щоб продовжити попередню)",
+        forceReset: 'Версія вашої гри застаріла, вам треба проходити гру з початку',
         unauthorized: 'Вибачте, але ця гра не для вас'
     },
     buttons: {
-        srart : "Вперед до пошуків"
+        srart: "Вперед до пошуків"
+    },
+    headers: {
+        gamePuzzle15: 'Збери мапу',
+        gameRevealTiles: 'Шукай шлях'
     }
 }
 
