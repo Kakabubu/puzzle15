@@ -259,16 +259,23 @@ const puzzleGame = {
     // Queue animation for changing tile image
     const timeout = 1000;
     const delay = tile.imagePath.inPreviousState === imagePath.questionMark ? timeout : 0; // Delay before animation starts
-    const previousImage = document.createElement('img');
+    const transition = `opacity ${parseFloat(timeout / 1000)}s ease-in-out`;
+
+    const previousImage = document.createElement('img'), newImage = div.querySelector('img');
+    const defaultOpacity = { new: newImage.style.opacity, prev: previousImage.style.opacity }
     previousImage.src = tile.imagePath.inPreviousState;
     previousImage.style.position = 'absolute';
-    previousImage.style.transition = `opacity ${parseFloat(timeout / 1000)}s ease-in-out`;
-    previousImage.style.opacity = '1';
+    previousImage.style.transition = transition;
+    //previousImage.style.opacity = '1';
+
+    newImage.style.transition = transition;
+    newImage.style.opacity = '0';
 
     div.appendChild(previousImage);
 
     setTimeout(() => {
       previousImage.style.opacity = '0';
+      newImage.style.opacity = defaultOpacity.new;
       setTimeout(() => {
         div.removeChild(previousImage);
       }, timeout);
